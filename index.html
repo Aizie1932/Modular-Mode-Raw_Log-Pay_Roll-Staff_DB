@@ -327,7 +327,8 @@
 </div>
 
 <script>
-const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxJfUL3SqoEttoBfaB_HNkzxIR1pordHGiKNY0lZL6crhVku22Ttq78OLiAfIXiXVLA/exec";
+// --- URL BARU ---
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxLM0Or_uRDCCPJ_F8TPEIO9aLw5otJOgmQi4a1M-0KvJcZ4J7hN6Lq-8d6pXqhn-A-/exec";
 
 // --- STATE ---
 let staffData = [];
@@ -336,7 +337,7 @@ let payrollData = [];
 
 // --- INIT & LOAD DATA ---
 window.onload = function() {
-    // Load data from Google Sheet on startup
+    // Load data dari Google Sheet pada startup
     loadData();
     document.getElementById('payTarikh').valueAsDate = new Date();
     calculatePayroll();
@@ -354,18 +355,17 @@ async function loadData() {
             payrollData = json.payroll || [];
             
             renderStaffDropdown();
-            renderFilterDropdown(); // Populate filter
+            renderFilterDropdown(); 
             renderStaffTable();
             renderAttendanceTable();
-            filterPayroll('all'); // Default show all
+            filterPayroll('all'); 
             showToast("Data berjaya dimuatkan");
         } else {
-            showToast("Gagal memuatkan data", "error");
+            showToast("Gagal memuatkan data: " + (json.message || "Ralat"), "error");
         }
     } catch (error) {
-        console.error(error);
-        // Fallback to empty if fetch fails
-        renderStaffDropdown();
+        console.error("Ralat loadData:", error);
+        showToast("Sambungan Gagal. Pastikan URL betul.", "error");
     }
 }
 
@@ -434,7 +434,6 @@ function processAction(action) {
         attendanceData.unshift({ ...data, id: data.timestamp, displayTime: data.timestamp });
         renderAttendanceTable();
         document.getElementById('nama').value = ""; document.getElementById('shift').value = "";
-        // Reload data from server to ensure sync
         setTimeout(loadData, 500); 
     });
 }
@@ -547,8 +546,6 @@ function deleteStaff(id) {
 }
 
 // --- PAYROLL ---
-let currentFilterType = 'all'; // Store current date filter state
-
 function calculatePayroll() {
     const rate = parseFloat(document.getElementById('payKadar').value) || 0;
     const ot = parseFloat(document.getElementById('payOT').value) || 0;
@@ -582,7 +579,7 @@ function addPayroll() {
         type: "pay_roll",
         tarikh: tarikh,
         staffID: staffID || "ID-Unknown",
-        nama: nama, // PASTIKAN NAMA DIHANTAR
+        nama: nama,
         masuk: document.getElementById('payMasuk').value || "-",
         keluar: document.getElementById('payKeluar').value || "-",
         rehat: document.getElementById('payRehat').value,
@@ -595,12 +592,12 @@ function addPayroll() {
     sendRequest(data).then(() => {
         showToast("Rekod Gaji disimpan");
         payrollData.unshift({ ...data, id: Date.now().toString() });
-        applyFilters(); // Refresh table with current filters
+        applyFilters(); 
         
         document.getElementById('payNama').value = "";
         document.getElementById('payStaffID').value = "";
         document.getElementById('payGajiBersih').value = "";
-        setTimeout(loadData, 500); // Sync with Sheet
+        setTimeout(loadData, 500);
     });
 }
 
@@ -647,7 +644,7 @@ function updatePayroll() {
         showToast("Rekod Gaji dikemaskini");
         const idx = payrollData.findIndex(x => x.id === id);
         if(idx!==-1) payrollData[idx] = { ...payrollData[idx], ...data };
-        applyFilters(); // Refresh
+        applyFilters(); 
         cancelEditPay();
         setTimeout(loadData, 500);
     });
@@ -668,15 +665,16 @@ function deletePayroll(id) {
     sendRequest({ type: "delete_roll", targetId: id }).then(() => {
         showToast("Rekod gaji dipadam");
         payrollData = payrollData.filter(x => x.id !== id);
-        applyFilters(); // Refresh
+        applyFilters(); 
         setTimeout(loadData, 500);
     });
 }
 
 // --- FILTERING SYSTEM ---
+let currentFilterType = 'all';
+
 function setFilterType(type) {
     currentFilterType = type;
-    // Update UI buttons
     document.querySelectorAll('.btn-filter button').forEach(b => b.classList.remove('active'));
     document.getElementById('btn-' + type).classList.add('active');
     applyFilters();
@@ -688,14 +686,12 @@ function applyFilters() {
 }
 
 function filterPayroll(type, staffName = "all") {
-    // If called from button click, update global type
     if (type !== currentFilterType) {
         currentFilterType = type;
         document.querySelectorAll('.btn-filter button').forEach(b => b.classList.remove('active'));
         document.getElementById('btn-' + type).classList.add('active');
     }
     
-    // If called without staffName arg (legacy), get from dropdown
     if (staffName === "all") {
         staffName = document.getElementById('filterStaffName').value;
     }
@@ -707,11 +703,10 @@ function filterPayroll(type, staffName = "all") {
     let total = 0;
     
     const filtered = payrollData.filter(row => {
-        // 1. Check Date
-        let dateMatch = true;
         if (!row.tarikh) return false;
         const rowDate = new Date(row.tarikh);
         
+        let dateMatch = true;
         if (type === 'day') {
             dateMatch = rowDate.toDateString() === now.toDateString();
         } else if (type === 'month') {
@@ -724,7 +719,6 @@ function filterPayroll(type, staffName = "all") {
             dateMatch = result === rowNum;
         }
 
-        // 2. Check Staff Name
         let nameMatch = true;
         if (staffName !== "all") {
             nameMatch = row.nama === staffName;
