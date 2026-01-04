@@ -3,398 +3,788 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Sistem Pengurusan Staff</title>
+<title>Sistem Pengurusan Staff & Payroll</title>
 <style>
     :root {
         --primary: #2563eb;
         --primary-dark: #1e40af;
         --secondary: #64748b;
-        --bg-body: #f1f5f9;
+        --bg-body: #f8fafc;
         --bg-card: #ffffff;
         --text-main: #1e293b;
         --text-muted: #64748b;
         --danger: #ef4444;
         --success: #22c55e;
+        --warning: #f59e0b;
         --border: #e2e8f0;
         --radius: 8px;
-        --shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+        --shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; }
-    body { background-color: var(--bg-body); color: var(--text-main); padding: 20px; line-height: 1.5; }
+    body { background-color: var(--bg-body); color: var(--text-main); padding: 20px; line-height: 1.5; font-size: 14px; }
     
-    header { max-width: 1200px; margin: 0 auto 30px auto; text-align: center; }
-    h1 { color: var(--primary-dark); margin-bottom: 10px; }
+    header { max-width: 1400px; margin: 0 auto 30px auto; text-align: center; }
+    h1 { color: var(--primary-dark); margin-bottom: 5px; font-size: 1.5rem; }
+    p.subtitle { color: var(--text-muted); font-size: 0.9rem; margin-bottom: 20px; }
 
-    .container { max-width: 1200px; margin: 0 auto; display: grid; grid-template-columns: 1fr; gap: 20px; }
-    @media (min-width: 900px) { .container { grid-template-columns: 350px 1fr; } }
+    /* SECTION LAYOUT */
+    .section-wrapper { max-width: 1400px; margin: 0 auto 40px auto; }
+    .section-grid { display: grid; grid-template-columns: 350px 1fr; gap: 20px; align-items: start; }
+    @media (max-width: 900px) { .section-grid { grid-template-columns: 1fr; } }
 
     /* Card Styles */
-    .card { background: var(--bg-card); border-radius: var(--radius); box-shadow: var(--shadow); padding: 20px; margin-bottom: 20px; border: 1px solid var(--border); }
-    .card h2 { font-size: 1.25rem; margin-bottom: 15px; padding-bottom: 10px; border-bottom: 2px solid var(--bg-body); color: var(--primary); display: flex; align-items: center; gap: 10px; }
+    .card { background: var(--bg-card); border-radius: var(--radius); box-shadow: var(--shadow); padding: 20px; border: 1px solid var(--border); height: 100%; }
+    .card h2 { font-size: 1.1rem; margin-bottom: 15px; padding-bottom: 10px; border-bottom: 2px solid var(--bg-body); color: var(--primary); display: flex; align-items: center; gap: 8px; }
 
     /* Form Elements */
-    .form-group { margin-bottom: 15px; }
-    label { display: block; margin-bottom: 5px; font-weight: 600; font-size: 0.9rem; color: var(--text-main); }
-    input, select { width: 100%; padding: 10px; border: 1px solid var(--border); border-radius: var(--radius); font-size: 1rem; }
-    input:focus, select:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1); }
-
-    .btn-group { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
+    .form-group { margin-bottom: 12px; }
+    .form-row { display: flex; gap: 10px; }
+    .form-row .form-group { flex: 1; }
     
-    button { cursor: pointer; padding: 10px 15px; border: none; border-radius: var(--radius); font-weight: 600; transition: background 0.2s; }
+    label { display: block; margin-bottom: 4px; font-weight: 600; font-size: 0.85rem; color: var(--text-main); }
+    input, select { width: 100%; padding: 8px; border: 1px solid var(--border); border-radius: var(--radius); font-size: 0.9rem; }
+    input:focus, select:focus { outline: none; border-color: var(--primary); }
+    input:disabled, select:disabled { background-color: #f1f5f9; color: #94a3b8; cursor: not-allowed; }
+    input[readonly] { background-color: #f8fafc; color: var(--text-muted); font-weight: bold; }
+
+    .btn-group { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; }
+    .btn-filter { display: flex; gap: 5px; margin-bottom: 15px; overflow-x: auto; padding-bottom: 5px; flex-wrap: wrap; }
+    
+    button { cursor: pointer; padding: 8px 12px; border: none; border-radius: var(--radius); font-weight: 600; font-size: 0.9rem; transition: background 0.2s; white-space: nowrap; }
     .btn-primary { background: var(--primary); color: white; width: 100%; }
     .btn-success { background: var(--success); color: white; }
     .btn-danger { background: var(--danger); color: white; }
-    button:hover { opacity: 0.9; }
+    .btn-warning { background: var(--warning); color: white; }
+    .btn-secondary { background: var(--secondary); color: white; }
+    .btn-outline { background: transparent; border: 1px solid var(--border); color: var(--text-main); }
+    .btn-outline:hover, .btn-outline.active { background: var(--primary); color: white; border-color: var(--primary); }
+    .btn-sm { padding: 4px 8px; font-size: 0.75rem; }
 
     /* Table Styles */
-    .table-responsive { overflow-x: auto; }
-    table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
-    th, td { text-align: left; padding: 12px; border-bottom: 1px solid var(--border); }
-    th { background-color: #f8fafc; color: var(--secondary); font-weight: 600; }
+    .table-responsive { overflow-x: auto; border-radius: var(--radius); border: 1px solid var(--border); }
+    table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+    th, td { text-align: left; padding: 10px; border-bottom: 1px solid var(--border); white-space: nowrap; }
+    th { background-color: #f8fafc; color: var(--secondary); font-weight: 600; font-size: 0.8rem; text-transform: uppercase; }
+    tr:last-child td { border-bottom: none; }
     
-    /* Toast Notification */
+    /* Toast */
     #toast-container { position: fixed; top: 20px; right: 20px; z-index: 9999; display: flex; flex-direction: column; gap: 10px; }
-    .toast { min-width: 250px; background: white; padding: 15px; border-radius: var(--radius); box-shadow: var(--shadow); border-left: 5px solid var(--primary); animation: slideIn 0.3s ease-out; }
+    .toast { min-width: 250px; background: white; padding: 12px; border-radius: var(--radius); box-shadow: var(--shadow); border-left: 5px solid var(--primary); animation: slideIn 0.3s ease-out; font-size: 0.9rem; }
     .toast.success { border-left-color: var(--success); }
     .toast.error { border-left-color: var(--danger); }
-    @keyframes slideIn { from { transform: translateX(100%); } to { transform: translateX(0); } }
+    @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
 
-    .badge { padding: 4px 8px; border-radius: 12px; font-size: 0.75rem; font-weight: bold; }
+    .badge { padding: 2px 6px; border-radius: 4px; font-size: 0.7rem; font-weight: bold; }
     .badge-in { background: #dcfce7; color: #166534; }
     .badge-out { background: #fee2e2; color: #991b1b; }
-    .icon { width: 20px; height: 20px; fill: currentColor; }
+    .badge-leave { background: #fff7ed; color: #9a3412; }
+    
+    .icon { width: 18px; height: 18px; fill: currentColor; }
+    
+    .payroll-summary { background: #eff6ff; padding: 10px; border-radius: var(--radius); margin-bottom: 10px; border: 1px solid #dbeafe; display: flex; justify-content: space-between; font-weight: bold; color: var(--primary-dark); }
 </style>
 </head>
 <body>
 
 <header>
-    <h1>Sistem Pengurusan Staff</h1>
-    <p>Sistem Kehadiran & Payroll (Live)</p>
+    <h1>Sistem Pengurusan Staff & Payroll</h1>
+    <p class="subtitle">Sistem Bersepadu Rekod Kehadiran & Gaji</p>
 </header>
 
 <div id="toast-container"></div>
 
-<div class="container">
-    
-    <!-- Left Column: Forms -->
-    <div class="sidebar">
-        
-        <!-- Section: Clock In/Out -->
+<!-- SECTION 1: KEHADIRAN -->
+<div class="section-wrapper" id="section-attendance">
+    <div class="section-grid">
         <section class="card">
             <h2>
                 <svg class="icon" viewBox="0 0 24 24"><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10 10-4.5 10-10S17.5 2 12 2zm4.2 14.2L11 13V7h1.5v5.2l4.5 2.7-.8 1.3z"/></svg>
-                Rekod Kehadiran
+                <span id="attFormTitle">Rekod Kehadiran</span>
             </h2>
+            <input type="hidden" id="editRowId">
             <div class="form-group">
-                <label for="nama">Nama Staff</label>
+                <label>Nama Staff</label>
                 <select id="nama">
                     <option value="">-- Pilih Nama --</option>
                 </select>
             </div>
             <div class="form-group">
-                <label for="shift">Shift</label>
+                <label>Shift / Status</label>
                 <select id="shift">
-                    <option value="">-- Pilih Shift --</option>
-                    <option value="Pagi">Pagi (08:00 - 17:00)</option>
-                    <option value="Petang">Petang (14:00 - 23:00)</option>
-                    <option value="Malam">Malam (23:00 - 08:00)</option>
+                    <option value="">-- Pilih --</option>
+                    <optgroup label="Kerja Shift">
+                        <option value="Pagi">Pagi (09:00 - 18:00)</option>
+                        <option value="Petang">Petang (13:00 - 22:00)</option>
+                    </optgroup>
+                    <optgroup label="Cuti & Khas">
+                        <option value="MC">MC</option>
+                        <option value="Unpaid Leave">Unpaid Leave</option>
+                        <option value="Urgent Leave">Urgent Leave</option>
+                        <option value="Annual Leave">Annual Leave</option>
+                        <option value="Off Day">Off Day</option>
+                    </optgroup>
                 </select>
             </div>
-            <div class="btn-group">
+            <div id="attActionBtns" class="btn-group">
                 <button onclick="processAction('Clock In')" class="btn-success">Clock In</button>
                 <button onclick="processAction('Clock Out')" class="btn-danger">Clock Out</button>
             </div>
+            <div id="attUpdateBtns" style="display:none;" class="btn-group">
+                <button onclick="saveEditAtt()" class="btn-warning">Update</button>
+                <button onclick="cancelEditAtt()" class="btn-secondary">Batal</button>
+            </div>
         </section>
 
-        <!-- Section: Tambah Staff -->
         <section class="card">
-            <h2>
+            <h2>Log Kehadiran</h2>
+            <div class="table-responsive">
+                <table id="attendanceTable">
+                    <thead>
+                        <tr>
+                            <th>Masa/Tarikh</th>
+                            <th>Nama</th>
+                            <th>Shift/Status</th>
+                            <th width="120">Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+            <p id="emptyLog" style="text-align:center; padding: 20px; color: #94a3b8;">Tiada rekod.</p>
+        </section>
+    </div>
+</div>
+
+<!-- SECTION 2: STAFF -->
+<div class="section-wrapper" id="section-staff">
+    <div class="section-grid">
+        <section class="card">
+            <h2 id="staffFormTitle">
                 <svg class="icon" viewBox="0 0 24 24"><path d="M15 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm-9-2V7H4v3H1v2h3v3h2v-3h3v-2H6zm9 4c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
-                Tambah Staff Baru
+                <span id="staffFormTitleText">Tambah Staff</span>
             </h2>
+            <input type="hidden" id="editStaffId">
             <div class="form-group">
                 <label>Nama Staff</label>
-                <input type="text" id="staffNama" placeholder="Contoh: Ali Bin Abu">
+                <input type="text" id="staffNama" placeholder="Nama">
             </div>
             <div class="form-group">
                 <label>Staff ID</label>
-                <input type="text" id="staffID" placeholder="Contoh: STF-001">
+                <input type="text" id="staffID" placeholder="ID">
             </div>
             <div class="form-group">
                 <label>Role</label>
                 <select id="staffRole">
-                    <option value="Staff">Staff</option>
-                    <option value="Admin">Admin</option>
-                    <option value="Manager">Manager</option>
+                    <option value="Therapist (Full Time)">Therapist (Full Time)</option>
+                    <option value="Therapist (Part Time)">Therapist (Part Time)</option>
+                    <option value="Admin Marketing">Admin Marketing</option>
+                    <option value="Admin Operation">Admin Operation</option>
                 </select>
             </div>
             <div class="form-group">
                 <label>Password</label>
                 <input type="password" id="staffPassword" placeholder="••••••">
             </div>
-            <button onclick="addStaff()" class="btn-primary">Tambah Staff</button>
+            <div id="addStaffBtnContainer">
+                <button onclick="addStaff()" class="btn-primary">Tambah Staff</button>
+            </div>
+            <div id="updateStaffBtnContainer" style="display:none;" class="btn-group">
+                <button onclick="updateStaff()" class="btn-warning">Simpan Role</button>
+                <button onclick="cancelEditStaff()" class="btn-secondary">Batal</button>
+            </div>
         </section>
 
-        <!-- Section: Tambah Payroll -->
-        <section class="card">
-            <h2>
-                <svg class="icon" viewBox="0 0 24 24"><path d="M11.8 10.9c-2.27-.59-3-1.2-3-2.15 0-1.09 1.01-1.85 2.7-1.85 1.78 0 2.44.85 2.5 2.1h2.21c-.07-1.72-1.12-3.3-3.21-3.81V3h-3v2.16c-1.94.42-3.5 1.68-3.5 3.61 0 2.31 1.91 3.46 4.7 4.13 2.5.6 3 1.48 3 2.41 0 .69-.49 1.79-2.7 1.79-2.06 0-2.87-.92-2.98-2.1h-2.2c.12 2.19 1.76 3.42 3.68 3.83V21h3v-2.15c1.95-.37 3.5-1.5 3.5-3.55 0-2.84-2.43-3.81-4.7-4.4z"/></svg>
-                Tambah Payroll
-            </h2>
-            <div class="form-group">
-                <label>Staff ID</label>
-                <input type="text" id="payStaffID" placeholder="Contoh: STF-001">
-            </div>
-            <div class="form-group">
-                <label>Jumlah Gaji (RM)</label>
-                <input type="number" id="payGaji" placeholder="2500">
-            </div>
-            <div class="form-group">
-                <label>Bulan</label>
-                <select id="payBulan">
-                    <option value="Januari">Januari</option>
-                    <option value="Februari">Februari</option>
-                    <option value="Mac">Mac</option>
-                    <option value="April">April</option>
-                    <option value="Mei">Mei</option>
-                    <option value="Jun">Jun</option>
-                    <option value="Julai">Julai</option>
-                    <option value="Ogos">Ogos</option>
-                    <option value="September">September</option>
-                    <option value="Oktober">Oktober</option>
-                    <option value="November">November</option>
-                    <option value="Disember">Disember</option>
-                </select>
-            </div>
-            <button onclick="addPayroll()" class="btn-primary">Hantar Payroll</button>
-        </section>
-
-    </div>
-
-    <!-- Right Column: Data Display -->
-    <div class="main-content">
-        
-        <!-- Log Kehadiran -->
-        <section class="card">
-            <h2>Log Kehadiran Terkini</h2>
-            <div class="table-responsive">
-                <table id="attendanceTable">
-                    <thead>
-                        <tr>
-                            <th>Masa</th>
-                            <th>Nama</th>
-                            <th>Shift</th>
-                            <th>Status</th>
-                        </tr>
-                    </thead>
-                    <tbody></tbody>
-                </table>
-            </div>
-            <p id="emptyLog" style="text-align:center; padding: 20px; color: #94a3b8;">Tiada rekod hari ini.</p>
-        </section>
-
-        <!-- Senarai Staff -->
         <section class="card">
             <h2>Senarai Staff</h2>
             <div class="table-responsive">
                 <table id="staffTable">
                     <thead>
                         <tr>
-                            <th>Staff ID</th>
+                            <th>ID</th>
                             <th>Nama</th>
                             <th>Role</th>
+                            <th width="140">Aksi</th>
                         </tr>
                     </thead>
                     <tbody></tbody>
                 </table>
             </div>
         </section>
+    </div>
+</div>
 
-        <!-- Rekod Payroll -->
+<!-- SECTION 3: PAYROLL -->
+<div class="section-wrapper" id="section-payroll">
+    <div class="section-grid">
         <section class="card">
-            <h2>Rekod Payroll</h2>
+            <h2 id="payFormTitle">
+                <svg class="icon" viewBox="0 0 24 24"><path d="M11.8 10.9c-2.27-.59-3-1.2-3-2.15 0-1.09 1.01-1.85 2.7-1.85 1.78 0 2.44.85 2.5 2.1h2.21c-.07-1.72-1.12-3.3-3.21-3.81V3h-3v2.16c-1.94.42-3.5 1.68-3.5 3.61 0 2.31 1.91 3.46 4.7 4.13 2.5.6 3 1.48 3 2.41 0 .69-.49 1.79-2.7 1.79-2.06 0-2.87-.92-2.98-2.1h-2.2c.12 2.19 1.76 3.42 3.68 3.83V21h3v-2.15c1.95-.37 3.5-1.5 3.5-3.55 0-2.84-2.43-3.81-4.7-4.4z"/></svg>
+                <span id="payFormTitleText">Rekod Gaji Harian</span>
+            </h2>
+            <input type="hidden" id="editPayId">
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Tarikh</label>
+                    <input type="date" id="payTarikh" onchange="calculatePayroll()">
+                </div>
+                <div class="form-group">
+                    <label>Staff</label>
+                    <select id="payNama" onchange="autoFillStaffID()">
+                        <option value="">-- Pilih --</option>
+                    </select>
+                </div>
+            </div>
+            <input type="hidden" id="payStaffID">
+            
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Masuk</label>
+                    <input type="time" id="payMasuk" onchange="calculatePayroll()">
+                </div>
+                <div class="form-group">
+                    <label>Keluar</label>
+                    <input type="time" id="payKeluar" onchange="calculatePayroll()">
+                </div>
+            </div>
+            
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Rehat (min)</label>
+                    <input type="number" id="payRehat" value="60" onchange="calculatePayroll()">
+                </div>
+                <div class="form-group">
+                    <label>OT (jam)</label>
+                    <input type="number" id="payOT" step="0.5" value="0" onchange="calculatePayroll()">
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Kadar (RM/jam)</label>
+                    <input type="number" id="payKadar" step="0.01" value="10" onchange="calculatePayroll()">
+                </div>
+                <div class="form-group">
+                    <label>Komisen (RM)</label>
+                    <input type="number" id="payKomisen" step="0.01" value="0" onchange="calculatePayroll()">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label style="color:var(--primary)">Jumlah Gaji Bersih (RM)</label>
+                <input type="text" id="payGajiBersih" readonly style="font-weight:bold; font-size:1.1rem; color:var(--primary-dark);">
+            </div>
+
+            <div id="addPayBtnContainer">
+                <button onclick="addPayroll()" class="btn-primary">Simpan Rekod Gaji</button>
+            </div>
+            <div id="updatePayBtnContainer" style="display:none;" class="btn-group">
+                <button onclick="updatePayroll()" class="btn-warning">Kemaskini Rekod</button>
+                <button onclick="cancelEditPay()" class="btn-secondary">Batal</button>
+            </div>
+        </section>
+
+        <section class="card">
+            <h2>Rekod Gaji Harian</h2>
+            <div class="payroll-summary">
+                <span>Jumlah Paparan: RM <span id="totalDisplayPay">0.00</span></span>
+                <span style="font-size:0.8rem; font-weight:normal;">(Dalam paparan semasa)</span>
+            </div>
+            
+            <!-- Filter Controls -->
+            <div class="form-row" style="margin-bottom:10px; gap:10px;">
+                <select id="filterStaffName" onchange="applyFilters()" style="flex:1;">
+                    <option value="all">Semua Staff</option>
+                    <!-- Options filled via JS -->
+                </select>
+            </div>
+            <div class="btn-filter">
+                <button onclick="setFilterType('all')" id="btn-all" class="btn-sm btn-outline active">Semua</button>
+                <button onclick="setFilterType('day')" id="btn-day" class="btn-sm btn-outline">Hari Ini</button>
+                <button onclick="setFilterType('week')" id="btn-week" class="btn-sm btn-outline">Minggu Ini</button>
+                <button onclick="setFilterType('month')" id="btn-month" class="btn-sm btn-outline">Bulan Ini</button>
+            </div>
+            
             <div class="table-responsive">
                 <table id="payrollTable">
                     <thead>
                         <tr>
-                            <th>Staff ID</th>
-                            <th>Gaji</th>
-                            <th>Bulan</th>
+                            <th>Tarikh</th>
+                            <th>Nama</th>
+                            <th>Masuk</th>
+                            <th>Keluar</th>
+                            <th>OT</th>
+                            <th>Komisen</th>
+                            <th>Gaji Bersih</th>
+                            <th width="140">Aksi</th>
                         </tr>
                     </thead>
                     <tbody></tbody>
                 </table>
             </div>
         </section>
-
     </div>
 </div>
 
 <script>
-// --- APPS SCRIPT URL ---
-// URL ini disambungkan terus ke Google Sheet anda
 const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxJfUL3SqoEttoBfaB_HNkzxIR1pordHGiKNY0lZL6crhVku22Ttq78OLiAfIXiXVLA/exec";
 
-// --- LOCAL STATE ---
-let staffData = [
-    { nama: "Aizie", id: "STF-001", role: "Admin" },
-    { nama: "Staff 2", id: "STF-002", role: "Staff" }
-];
+// --- STATE ---
+let staffData = [];
 let attendanceData = [];
 let payrollData = [];
 
+// --- INIT & LOAD DATA ---
 window.onload = function() {
-    renderStaffDropdown();
-    renderStaffTable();
+    // Load data from Google Sheet on startup
+    loadData();
+    document.getElementById('payTarikh').valueAsDate = new Date();
+    calculatePayroll();
 };
 
-// --- HELPER FUNCTIONS ---
-function showToast(message, type = "success") {
-    const container = document.getElementById('toast-container');
-    const toast = document.createElement('div');
-    toast.className = `toast ${type}`;
-    toast.innerHTML = `<span>${message}</span>`;
-    container.appendChild(toast);
-    setTimeout(() => { toast.style.opacity = '0'; setTimeout(() => toast.remove(), 300); }, 3000);
+async function loadData() {
+    try {
+        showToast("Memuatkan data...", "success");
+        const response = await fetch(SCRIPT_URL);
+        const json = await response.json();
+        
+        if (json.result === "success") {
+            staffData = json.staff || [];
+            attendanceData = json.attendance || [];
+            payrollData = json.payroll || [];
+            
+            renderStaffDropdown();
+            renderFilterDropdown(); // Populate filter
+            renderStaffTable();
+            renderAttendanceTable();
+            filterPayroll('all'); // Default show all
+            showToast("Data berjaya dimuatkan");
+        } else {
+            showToast("Gagal memuatkan data", "error");
+        }
+    } catch (error) {
+        console.error(error);
+        // Fallback to empty if fetch fails
+        renderStaffDropdown();
+    }
 }
 
-function getCurrentTime() {
-    return new Date().toLocaleTimeString('ms-MY', { hour: '2-digit', minute: '2-digit' });
+// --- HELPERS ---
+function showToast(msg, type="success") {
+    const c = document.getElementById('toast-container');
+    const t = document.createElement('div');
+    t.className = `toast ${type}`;
+    t.innerText = msg;
+    c.appendChild(t);
+    setTimeout(() => { t.style.opacity='0'; setTimeout(()=>t.remove(), 300); }, 3000);
+}
+
+function getFormattedDate() {
+    const now = new Date();
+    return now.toLocaleDateString('ms-MY') + ' ' + now.toLocaleTimeString('ms-MY', { hour: '2-digit', minute: '2-digit' });
 }
 
 function renderStaffDropdown() {
-    const select = document.getElementById('nama');
-    select.innerHTML = '<option value="">-- Pilih Nama --</option>';
-    staffData.forEach(staff => {
-        const opt = document.createElement('option');
-        opt.value = staff.nama;
-        opt.textContent = staff.nama;
-        select.appendChild(opt);
+    const selects = [document.getElementById('nama'), document.getElementById('payNama')];
+    selects.forEach(sel => {
+        sel.innerHTML = '<option value="">-- Pilih --</option>';
+        staffData.forEach(s => {
+            const opt = document.createElement('option');
+            opt.value = s.nama;
+            opt.textContent = s.nama;
+            sel.appendChild(opt);
+        });
     });
 }
 
-// --- API & LOGIC ---
+function renderFilterDropdown() {
+    const sel = document.getElementById('filterStaffName');
+    sel.innerHTML = '<option value="all">Semua Staff</option>';
+    staffData.forEach(s => {
+        const opt = document.createElement('option');
+        opt.value = s.nama;
+        opt.textContent = s.nama;
+        sel.appendChild(opt);
+    });
+}
 
+function autoFillStaffID() {
+    const nama = document.getElementById('payNama').value;
+    const staff = staffData.find(s => s.nama === nama);
+    if(staff) document.getElementById('payStaffID').value = staff.id;
+}
+
+// --- ATTENDANCE ---
 function processAction(action) {
     const nama = document.getElementById('nama').value;
     const shift = document.getElementById('shift').value;
-    if (!nama || !shift) { showToast("Lengkapkan borang (Nama & Shift)", "error"); return; }
+    if (!nama || !shift) return showToast("Sila pilih Nama & Shift", "error");
+
+    let finalAction = action;
+    const leaveTypes = ["MC", "Unpaid Leave", "Urgent Leave", "Annual Leave", "Off Day"];
+    if (leaveTypes.includes(shift)) finalAction = shift;
 
     const data = {
-        type: "raw_log",
-        nama: nama,
-        shift: shift,
-        action: action
+        type: "raw_log", nama, shift, action: finalAction,
+        timestamp: getFormattedDate(), uniqueId: Date.now()
     };
 
-    // Hantar ke Google Sheet
-    fetch(SCRIPT_URL, {
-        method: "POST",
-        mode: 'no-cors', // Diperlukan untuk elakkan ralat CORS Google Apps Script
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data)
-    })
-    .then(() => {
-        // Update UI secara manual (kerana response tak boleh dibaca dalam mode no-cors)
-        showToast(`${action} berjaya direkod (Google Sheet)`);
-        
-        // Tambah ke data tempatan untuk paparan segera
-        attendanceData.unshift({ ...data, timestamp: getCurrentTime() });
+    sendRequest(data).then(() => {
+        showToast(`${finalAction} direkod`);
+        attendanceData.unshift({ ...data, id: data.timestamp, displayTime: data.timestamp });
         renderAttendanceTable();
-        
-        // Reset borang
-        document.getElementById('nama').value = "";
-        document.getElementById('shift').value = "";
-    })
-    .catch(err => showToast("Gagal hantar data", "error"));
+        document.getElementById('nama').value = ""; document.getElementById('shift').value = "";
+        // Reload data from server to ensure sync
+        setTimeout(loadData, 500); 
+    });
 }
 
+function editRecordAtt(id) {
+    const r = attendanceData.find(x => x.id === id);
+    if(!r) return;
+    document.getElementById('nama').value = r.nama;
+    document.getElementById('shift').value = r.shift;
+    document.getElementById('editRowId').value = r.id;
+    document.getElementById('attFormTitle').innerText = "Kemaskini Log";
+    document.getElementById('attActionBtns').style.display = "none";
+    document.getElementById('attUpdateBtns').style.display = "grid";
+    document.getElementById('section-attendance').scrollIntoView({behavior:'smooth', block:'start'});
+}
+
+function saveEditAtt() {
+    const id = document.getElementById('editRowId').value;
+    const nama = document.getElementById('nama').value;
+    const shift = document.getElementById('shift').value;
+    let finalAction = "Clock In";
+    if(["MC","Unpaid Leave","Urgent Leave","Annual Leave","Off Day"].includes(shift)) finalAction = shift;
+    
+    sendRequest({ type: "update_log", targetId: id, nama, shift, action: finalAction }).then(() => {
+        showToast("Log dikemaskini");
+        const idx = attendanceData.findIndex(x => x.id === id);
+        if(idx!==-1) { attendanceData[idx].nama=nama; attendanceData[idx].shift=shift; attendanceData[idx].action=finalAction; }
+        renderAttendanceTable();
+        cancelEditAtt();
+        setTimeout(loadData, 500);
+    });
+}
+
+function cancelEditAtt() {
+    document.getElementById('attFormTitle').innerText = "Rekod Kehadiran";
+    document.getElementById('attActionBtns').style.display = "grid";
+    document.getElementById('attUpdateBtns').style.display = "none";
+    document.getElementById('nama').value = ""; document.getElementById('shift').value = ""; document.getElementById('editRowId').value = "";
+}
+
+function deleteRecordAtt(id) {
+    if(!confirm("Padam rekod ini?")) return;
+    sendRequest({ type: "delete_log", targetId: id }).then(() => {
+        showToast("Rekod dipadam");
+        attendanceData = attendanceData.filter(x => x.id !== id);
+        renderAttendanceTable();
+        setTimeout(loadData, 500);
+    });
+}
+
+// --- STAFF ---
 function addStaff() {
     const nama = document.getElementById('staffNama').value;
-    const staffID = document.getElementById('staffID').value;
+    const id = document.getElementById('staffID').value;
     const role = document.getElementById('staffRole').value;
-    const password = document.getElementById('staffPassword').value;
+    const pass = document.getElementById('staffPassword').value;
+    if(!nama||!id||!role||!pass) return showToast("Lengkapkan borang", "error");
 
-    if (!nama || !staffID || !role || !password) { showToast("Lengkapkan borang", "error"); return; }
+    sendRequest({ type: "staff_db", nama, staffID: id, role, password: pass }).then(() => {
+        showToast(`Staff ${nama} ditambah`);
+        staffData.push({ nama, id, role });
+        renderStaffTable(); renderStaffDropdown(); renderFilterDropdown();
+        document.getElementById('staffNama').value=""; document.getElementById('staffID').value=""; document.getElementById('staffPassword').value="";
+        setTimeout(loadData, 500);
+    });
+}
 
-    const data = {
-        type: "staff_db",
-        nama: nama,
-        staffID: staffID,
-        role: role,
-        password: password
-    };
+function editStaff(id) {
+    const s = staffData.find(x => x.id === id);
+    if(!s) return;
+    document.getElementById('staffNama').value = s.nama; document.getElementById('staffNama').disabled=true;
+    document.getElementById('staffID').value = s.id; document.getElementById('staffID').disabled=true;
+    document.getElementById('staffRole').value = s.role;
+    document.getElementById('editStaffId').value = s.id;
+    document.getElementById('staffFormTitleText').innerText = "Kemaskini Role";
+    document.getElementById('addStaffBtnContainer').style.display = "none";
+    document.getElementById('updateStaffBtnContainer').style.display = "grid";
+    document.getElementById('section-staff').scrollIntoView({behavior:'smooth', block:'start'});
+}
 
-    fetch(SCRIPT_URL, {
-        method: "POST",
-        mode: 'no-cors',
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data)
-    })
-    .then(() => {
-        showToast(`Staff ${nama} berjaya ditambah`);
-        
-        // Update UI tempatan
-        staffData.push({ nama, id: staffID, role });
-        renderStaffTable();
-        renderStaffDropdown();
-        
-        document.getElementById('staffNama').value = "";
-        document.getElementById('staffID').value = "";
-        document.getElementById('staffPassword').value = "";
-    })
-    .catch(err => showToast("Gagal hantar data", "error"));
+function updateStaff() {
+    const id = document.getElementById('editStaffId').value;
+    const role = document.getElementById('staffRole').value;
+    sendRequest({ type: "update_staff", targetId: id, role }).then(() => {
+        showToast("Role dikemaskini");
+        const idx = staffData.findIndex(x => x.id === id);
+        if(idx!==-1) staffData[idx].role = role;
+        renderStaffTable(); cancelEditStaff();
+        setTimeout(loadData, 500);
+    });
+}
+
+function cancelEditStaff() {
+    document.getElementById('staffFormTitleText').innerText = "Tambah Staff";
+    document.getElementById('addStaffBtnContainer').style.display = "block";
+    document.getElementById('updateStaffBtnContainer').style.display = "none";
+    document.getElementById('staffNama').value=""; document.getElementById('staffNama').disabled=false;
+    document.getElementById('staffID').value=""; document.getElementById('staffID').disabled=false;
+    document.getElementById('editStaffId').value = "";
+}
+
+function deleteStaff(id) {
+    if(!confirm("Padam staff ini?")) return;
+    sendRequest({ type: "delete_staff", targetId: id }).then(() => {
+        showToast("Staff dipadam");
+        staffData = staffData.filter(x => x.id !== id);
+        renderStaffTable(); renderStaffDropdown(); renderFilterDropdown();
+        setTimeout(loadData, 500);
+    });
+}
+
+// --- PAYROLL ---
+let currentFilterType = 'all'; // Store current date filter state
+
+function calculatePayroll() {
+    const rate = parseFloat(document.getElementById('payKadar').value) || 0;
+    const ot = parseFloat(document.getElementById('payOT').value) || 0;
+    const comm = parseFloat(document.getElementById('payKomisen').value) || 0;
+    const basic = rate * 8; 
+    const otPay = ot * rate * 1.5;
+    const total = basic + otPay + comm;
+    document.getElementById('payGajiBersih').value = total.toFixed(2);
+    document.getElementById('payGajiBersih').dataset.value = total.toFixed(2);
 }
 
 function addPayroll() {
-    const staffID = document.getElementById('payStaffID').value;
-    const gaji = document.getElementById('payGaji').value;
-    const bulan = document.getElementById('payBulan').value;
+    let tarikh = document.getElementById('payTarikh').value;
+    if (!tarikh) {
+        const today = new Date();
+        tarikh = today.toISOString().split('T')[0];
+        document.getElementById('payTarikh').value = tarikh; 
+    }
 
-    if (!staffID || !gaji || !bulan) { showToast("Lengkapkan borang", "error"); return; }
+    const nama = document.getElementById('payNama').value || "Tiada Nama";
+    let staffID = document.getElementById('payStaffID').value;
+    
+    if (!staffID && nama !== "Tiada Nama") {
+        const staff = staffData.find(s => s.nama === nama);
+        if(staff) staffID = staff.id;
+    }
+
+    if(!tarikh || !nama) return showToast("Sila pilih Tarikh & Staff", "error");
 
     const data = {
         type: "pay_roll",
-        staffID: staffID,
-        gaji: gaji,
-        bulan: bulan
+        tarikh: tarikh,
+        staffID: staffID || "ID-Unknown",
+        nama: nama, // PASTIKAN NAMA DIHANTAR
+        masuk: document.getElementById('payMasuk').value || "-",
+        keluar: document.getElementById('payKeluar').value || "-",
+        rehat: document.getElementById('payRehat').value,
+        ot: document.getElementById('payOT').value,
+        kadar: document.getElementById('payKadar').value,
+        komisen: document.getElementById('payKomisen').value,
+        gajiBersih: document.getElementById('payGajiBersih').value
     };
 
-    fetch(SCRIPT_URL, {
+    sendRequest(data).then(() => {
+        showToast("Rekod Gaji disimpan");
+        payrollData.unshift({ ...data, id: Date.now().toString() });
+        applyFilters(); // Refresh table with current filters
+        
+        document.getElementById('payNama').value = "";
+        document.getElementById('payStaffID').value = "";
+        document.getElementById('payGajiBersih').value = "";
+        setTimeout(loadData, 500); // Sync with Sheet
+    });
+}
+
+function editPayroll(id) {
+    const r = payrollData.find(x => x.id === id);
+    if(!r) return;
+    
+    document.getElementById('payTarikh').value = r.tarikh;
+    document.getElementById('payNama').value = r.nama;
+    autoFillStaffID();
+    document.getElementById('payMasuk').value = r.masuk;
+    document.getElementById('payKeluar').value = r.keluar;
+    document.getElementById('payRehat').value = r.rehat;
+    document.getElementById('payOT').value = r.ot;
+    document.getElementById('payKadar').value = r.kadar;
+    document.getElementById('payKomisen').value = r.komisen;
+    document.getElementById('payGajiBersih').value = r.gajiBersih;
+    
+    document.getElementById('editPayId').value = r.id;
+    document.getElementById('payFormTitleText').innerText = "Kemaskini Rekod Gaji";
+    document.getElementById('addPayBtnContainer').style.display = "none";
+    document.getElementById('updatePayBtnContainer').style.display = "grid";
+    document.getElementById('section-payroll').scrollIntoView({behavior:'smooth', block:'start'});
+}
+
+function updatePayroll() {
+    const id = document.getElementById('editPayId').value;
+    const data = {
+        type: "update_roll",
+        targetId: id,
+        tarikh: document.getElementById('payTarikh').value,
+        staffID: document.getElementById('payStaffID').value,
+        nama: document.getElementById('payNama').value,
+        masuk: document.getElementById('payMasuk').value,
+        keluar: document.getElementById('payKeluar').value,
+        rehat: document.getElementById('payRehat').value,
+        ot: document.getElementById('payOT').value,
+        kadar: document.getElementById('payKadar').value,
+        komisen: document.getElementById('payKomisen').value,
+        gajiBersih: document.getElementById('payGajiBersih').value
+    };
+
+    sendRequest(data).then(() => {
+        showToast("Rekod Gaji dikemaskini");
+        const idx = payrollData.findIndex(x => x.id === id);
+        if(idx!==-1) payrollData[idx] = { ...payrollData[idx], ...data };
+        applyFilters(); // Refresh
+        cancelEditPay();
+        setTimeout(loadData, 500);
+    });
+}
+
+function cancelEditPay() {
+    document.getElementById('payFormTitleText').innerText = "Rekod Gaji Harian";
+    document.getElementById('addPayBtnContainer').style.display = "block";
+    document.getElementById('updatePayBtnContainer').style.display = "none";
+    document.getElementById('editPayId').value = "";
+    document.getElementById('payNama').value = "";
+    document.getElementById('payStaffID').value = "";
+    document.getElementById('payGajiBersih').value = "";
+}
+
+function deletePayroll(id) {
+    if(!confirm("Padam rekod gaji ini?")) return;
+    sendRequest({ type: "delete_roll", targetId: id }).then(() => {
+        showToast("Rekod gaji dipadam");
+        payrollData = payrollData.filter(x => x.id !== id);
+        applyFilters(); // Refresh
+        setTimeout(loadData, 500);
+    });
+}
+
+// --- FILTERING SYSTEM ---
+function setFilterType(type) {
+    currentFilterType = type;
+    // Update UI buttons
+    document.querySelectorAll('.btn-filter button').forEach(b => b.classList.remove('active'));
+    document.getElementById('btn-' + type).classList.add('active');
+    applyFilters();
+}
+
+function applyFilters() {
+    const staffFilter = document.getElementById('filterStaffName').value;
+    filterPayroll(currentFilterType, staffFilter);
+}
+
+function filterPayroll(type, staffName = "all") {
+    // If called from button click, update global type
+    if (type !== currentFilterType) {
+        currentFilterType = type;
+        document.querySelectorAll('.btn-filter button').forEach(b => b.classList.remove('active'));
+        document.getElementById('btn-' + type).classList.add('active');
+    }
+    
+    // If called without staffName arg (legacy), get from dropdown
+    if (staffName === "all") {
+        staffName = document.getElementById('filterStaffName').value;
+    }
+
+    const tbody = document.querySelector('#payrollTable tbody');
+    tbody.innerHTML = '';
+    
+    const now = new Date();
+    let total = 0;
+    
+    const filtered = payrollData.filter(row => {
+        // 1. Check Date
+        let dateMatch = true;
+        if (!row.tarikh) return false;
+        const rowDate = new Date(row.tarikh);
+        
+        if (type === 'day') {
+            dateMatch = rowDate.toDateString() === now.toDateString();
+        } else if (type === 'month') {
+            dateMatch = rowDate.getMonth() === now.getMonth() && rowDate.getFullYear() === now.getFullYear();
+        } else if (type === 'week') {
+            const oneJan = new Date(now.getFullYear(), 0, 1);
+            const numberOfDays = Math.floor((now - oneJan) / (24 * 60 * 60 * 1000));
+            const result = Math.ceil((now.getDay() + 1 + numberOfDays) / 7);
+            const rowNum = Math.ceil((rowDate.getDay() + 1 + Math.floor((rowDate - oneJan) / (24 * 60 * 60 * 1000))) / 7);
+            dateMatch = result === rowNum;
+        }
+
+        // 2. Check Staff Name
+        let nameMatch = true;
+        if (staffName !== "all") {
+            nameMatch = row.nama === staffName;
+        }
+
+        return dateMatch && nameMatch;
+    });
+
+    filtered.forEach(row => {
+        total += parseFloat(row.gajiBersih || 0);
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+            <td>${row.tarikh}</td>
+            <td>${row.nama}</td>
+            <td>${row.masuk}</td>
+            <td>${row.keluar}</td>
+            <td>${row.ot}j</td>
+            <td>RM${parseFloat(row.komisen).toFixed(2)}</td>
+            <td style="font-weight:bold; color:var(--primary-dark);">RM${parseFloat(row.gajiBersih).toFixed(2)}</td>
+            <td>
+                <button onclick="editPayroll('${row.id}')" class="btn-sm btn-warning">Edit</button>
+                <button onclick="deletePayroll('${row.id}')" class="btn-sm btn-danger">Padam</button>
+            </td>
+        `;
+        tbody.appendChild(tr);
+    });
+
+    document.getElementById('totalDisplayPay').innerText = total.toFixed(2);
+}
+
+// --- FETCH WRAPPER ---
+function sendRequest(data) {
+    return fetch(SCRIPT_URL, {
         method: "POST",
         mode: 'no-cors',
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data)
     })
-    .then(() => {
-        showToast("Payroll berjaya direkod");
-        
-        // Update UI tempatan
-        payrollData.unshift(data);
-        renderPayrollTable();
-        
-        document.getElementById('payStaffID').value = "";
-        document.getElementById('payGaji').value = "";
-    })
     .catch(err => showToast("Gagal hantar data", "error"));
 }
 
-// --- RENDER TABLES ---
+// --- RENDER ---
 function renderAttendanceTable() {
     const tbody = document.querySelector('#attendanceTable tbody');
-    const emptyMsg = document.getElementById('emptyLog');
+    const empty = document.getElementById('emptyLog');
     tbody.innerHTML = '';
     
     if (attendanceData.length > 0) {
-        emptyMsg.style.display = 'none';
+        empty.style.display = 'none';
         attendanceData.forEach(row => {
+            let b = 'badge-in';
+            if(["MC","Unpaid Leave","Urgent Leave","Annual Leave","Off Day"].includes(row.action)) b='badge-leave';
+            else if(row.action==='Clock Out') b='badge-out';
+            
             const tr = document.createElement('tr');
-            const badgeClass = row.action === 'Clock In' ? 'badge-in' : 'badge-out';
-            tr.innerHTML = `<td>${row.timestamp}</td><td>${row.nama}</td><td>${row.shift}</td><td><span class="badge ${badgeClass}">${row.action}</span></td>`;
+            tr.innerHTML = `<td>${row.displayTime}</td><td>${row.nama}</td><td><span class="badge ${b}">${row.shift}</span></td>
+            <td><button onclick="editRecordAtt('${row.id}')" class="btn-sm btn-warning">Edit</button> <button onclick="deleteRecordAtt('${row.id}')" class="btn-sm btn-danger">Padam</button></td>`;
             tbody.appendChild(tr);
         });
-    }
+    } else { empty.style.display = 'block'; }
 }
 
 function renderStaffTable() {
@@ -402,17 +792,8 @@ function renderStaffTable() {
     tbody.innerHTML = '';
     staffData.forEach(row => {
         const tr = document.createElement('tr');
-        tr.innerHTML = `<td>${row.id}</td><td>${row.nama}</td><td>${row.role}</td>`;
-        tbody.appendChild(tr);
-    });
-}
-
-function renderPayrollTable() {
-    const tbody = document.querySelector('#payrollTable tbody');
-    tbody.innerHTML = '';
-    payrollData.forEach(row => {
-        const tr = document.createElement('tr');
-        tr.innerHTML = `<td>${row.staffID}</td><td>RM ${parseFloat(row.gaji).toLocaleString()}</td><td>${row.bulan}</td>`;
+        tr.innerHTML = `<td>${row.id}</td><td>${row.nama}</td><td>${row.role}</td>
+        <td><button onclick="editStaff('${row.id}')" class="btn-sm btn-warning">Edit Role</button> <button onclick="deleteStaff('${row.id}')" class="btn-sm btn-danger">Padam</button></td>`;
         tbody.appendChild(tr);
     });
 }
