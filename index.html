@@ -180,6 +180,7 @@
                     <option value="Therapist (Part Time)">Therapist (Part Time)</option>
                     <option value="Admin Marketing">Admin Marketing</option>
                     <option value="Admin Operation">Admin Operation</option>
+                    <option value="Programmer">Programmer</option>
                 </select>
             </div>
             <div class="form-group">
@@ -337,7 +338,6 @@ let payrollData = [];
 
 // --- INIT & LOAD DATA ---
 window.onload = function() {
-    // Load data dari Google Sheet pada startup
     loadData();
     document.getElementById('payTarikh').valueAsDate = new Date();
     calculatePayroll();
