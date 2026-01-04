@@ -185,7 +185,7 @@
             </div>
             <div class="form-group">
                 <label>Password</label>
-                <input type="password" id="staffPassword" placeholder="••••••">
+                <input type="password" id="staffPassword" placeholder="••••">
             </div>
             <div id="addStaffBtnContainer">
                 <button onclick="addStaff()" class="btn-primary">Tambah Staff</button>
@@ -240,11 +240,11 @@
             
             <div class="form-row">
                 <div class="form-group">
-                    <label>Masuk</label>
+                    <label>Masuk (24 Jam)</label>
                     <input type="time" id="payMasuk" onchange="calculatePayroll()">
                 </div>
                 <div class="form-group">
-                    <label>Keluar</label>
+                    <label>Keluar (24 Jam)</label>
                     <input type="time" id="payKeluar" onchange="calculatePayroll()">
                 </div>
             </div>
@@ -269,6 +269,11 @@
                     <label>Komisen (RM)</label>
                     <input type="number" id="payKomisen" step="0.01" value="0" onchange="calculatePayroll()">
                 </div>
+            </div>
+
+            <!-- BUTANG KIRA MANUAL -->
+            <div class="form-group">
+                <button onclick="calculatePayroll()" class="btn-secondary" style="margin-bottom: 8px; width: 100%;">Kira Jumlah</button>
             </div>
 
             <div class="form-group">
@@ -346,7 +351,11 @@ window.onload = function() {
 async function loadData() {
     try {
         showToast("Memuatkan data...", "success");
-        const response = await fetch(SCRIPT_URL);
+        
+        // --- TAMBAHAN CACHE BUSTING ---
+        // Menambah masa pada URL untuk memastikan data sentiasa segar
+        const cacheBuster = "?t=" + new Date().getTime();
+        const response = await fetch(SCRIPT_URL + cacheBuster);
         const json = await response.json();
         
         if (json.result === "success") {
@@ -382,6 +391,70 @@ function showToast(msg, type="success") {
 function getFormattedDate() {
     const now = new Date();
     return now.toLocaleDateString('ms-MY') + ' ' + now.toLocaleTimeString('ms-MY', { hour: '2-digit', minute: '2-digit' });
+}
+
+// --- HELPER: CLEAN TIME (ROBUST 24 JAM) ---
+// Fungsi ini mengelakkan paparan NaN:undefined
+function cleanTime(timeStr) {
+    // 1. Handle empty, null, or placeholder '-'
+    if (!timeStr || timeStr === '-' || timeStr.trim() === '') return '-';
+    
+    let t = timeStr.toString().trim();
+    
+    // 2. Handle standard 24h format "HH:mm:ss" (Excel/Sheet default)
+    // Cek jika panjang adalah 8 (00:00:00) dan ada 2 titik bertindih
+    if (t.length === 8 && t.split(':').length === 3) {
+        return t.substring(0, 5); 
+    }
+    
+    // 3. Handle 24h format "HH:mm" or "H:mm"
+    const parts = t.split(':');
+    
+    // Mesti ada sekurang-kurangnya jam dan minit (2 bahagian)
+    if (parts.length >= 2) {
+        let h = parts[0];
+        let m = parts[1];
+        
+        // Pastikan jam ada nilai yang sah
+        if (!h || isNaN(parseInt(h))) return '-';
+        
+        // Pad jam dengan 0 jika perlu (contoh: "8:30" -> "08:30")
+        if (h.length < 2) h = '0' + h;
+        
+        // Ambil 2 digit pertama minit sahaja (untuk elak masalah split aneh)
+        if (m && m.length > 2) m = m.substring(0, 2);
+        
+        return `${h}:${m}`;
+    }
+    
+    // Fallback: Jika format tidak dikenali, kembalikan dash
+    return '-';
+}
+
+function formatFullDate(dateStr, timeStr) {
+    if (!dateStr) return '-';
+    
+    let d;
+    if (typeof dateStr === 'string') {
+        d = new Date(dateStr);
+    } else {
+        d = new Date(dateStr);
+    }
+
+    let datePart = "";
+    if (!isNaN(d.getTime())) {
+        const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+        datePart = d.toLocaleDateString('ms-MY', options);
+    } else {
+        datePart = dateStr;
+    }
+
+    // Masa guna cleanTime untuk elak error
+    let timePart = '';
+    if (timeStr && timeStr !== '-') {
+        timePart = ' ' + cleanTime(timeStr);
+    }
+    return datePart + timePart;
 }
 
 function renderStaffDropdown() {
@@ -597,7 +670,9 @@ function addPayroll() {
         document.getElementById('payNama').value = "";
         document.getElementById('payStaffID').value = "";
         document.getElementById('payGajiBersih').value = "";
-        setTimeout(loadData, 500);
+        
+        // --- TAMBAHAN: DELAY AGAR DATA SELESAI DISIMPAN DI SHEET ---
+        setTimeout(loadData, 1000); 
     });
 }
 
@@ -608,8 +683,11 @@ function editPayroll(id) {
     document.getElementById('payTarikh').value = r.tarikh;
     document.getElementById('payNama').value = r.nama;
     autoFillStaffID();
-    document.getElementById('payMasuk').value = r.masuk;
-    document.getElementById('payKeluar').value = r.keluar;
+    
+    // GUNA cleanTime UNTUK MEMASTIKAN FORMAT BORANG BETUL (HH:mm)
+    document.getElementById('payMasuk').value = cleanTime(r.masuk);
+    document.getElementById('payKeluar').value = cleanTime(r.keluar);
+    
     document.getElementById('payRehat').value = r.rehat;
     document.getElementById('payOT').value = r.ot;
     document.getElementById('payKadar').value = r.kadar;
@@ -631,8 +709,8 @@ function updatePayroll() {
         tarikh: document.getElementById('payTarikh').value,
         staffID: document.getElementById('payStaffID').value,
         nama: document.getElementById('payNama').value,
-        masuk: document.getElementById('payMasuk').value,
-        keluar: document.getElementById('payKeluar').value,
+        masuk: document.getElementById('payMasuk').value || "-",
+        keluar: document.getElementById('payKeluar').value || "-",
         rehat: document.getElementById('payRehat').value,
         ot: document.getElementById('payOT').value,
         kadar: document.getElementById('payKadar').value,
@@ -646,7 +724,7 @@ function updatePayroll() {
         if(idx!==-1) payrollData[idx] = { ...payrollData[idx], ...data };
         applyFilters(); 
         cancelEditPay();
-        setTimeout(loadData, 500);
+        setTimeout(loadData, 1000); // Update delay
     });
 }
 
@@ -658,6 +736,8 @@ function cancelEditPay() {
     document.getElementById('payNama').value = "";
     document.getElementById('payStaffID').value = "";
     document.getElementById('payGajiBersih').value = "";
+    document.getElementById('payMasuk').value = "";
+    document.getElementById('payKeluar').value = "";
 }
 
 function deletePayroll(id) {
@@ -666,7 +746,7 @@ function deletePayroll(id) {
         showToast("Rekod gaji dipadam");
         payrollData = payrollData.filter(x => x.id !== id);
         applyFilters(); 
-        setTimeout(loadData, 500);
+        setTimeout(loadData, 1000); // Update delay
     });
 }
 
@@ -729,12 +809,19 @@ function filterPayroll(type, staffName = "all") {
 
     filtered.forEach(row => {
         total += parseFloat(row.gajiBersih || 0);
+        
+        // --- PAPARAN YANG DIBETULKAN ---
+        const displayTarikh = formatFullDate(row.tarikh, row.masuk);
+        // Guna cleanTime untuk memastikan display ikut input dan tidak menjadi NaN
+        const displayMasuk = cleanTime(row.masuk);
+        const displayKeluar = cleanTime(row.keluar);
+
         const tr = document.createElement('tr');
         tr.innerHTML = `
-            <td>${row.tarikh}</td>
+            <td>${displayTarikh}</td>
             <td>${row.nama}</td>
-            <td>${row.masuk}</td>
-            <td>${row.keluar}</td>
+            <td>${displayMasuk}</td>
+            <td>${displayKeluar}</td>
             <td>${row.ot}j</td>
             <td>RM${parseFloat(row.komisen).toFixed(2)}</td>
             <td style="font-weight:bold; color:var(--primary-dark);">RM${parseFloat(row.gajiBersih).toFixed(2)}</td>
