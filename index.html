@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sistem Pengurusan Staff</title>
+<style>
+    :root {
+        --primary: #2563eb;
+        --primary-dark: #1e40af;
+        --secondary: #64748b;
+        --bg-body: #f1f5f9;
+        --bg-card: #ffffff;
+        --text-main: #1e293b;
+        --text-muted: #64748b;
+        --danger: #ef4444;
+        --success: #22c55e;
+        --border: #e2e8f0;
+        --radius: 8px;
+        --shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; }
+    body { background-color: var(--bg-body); color: var(--text-main); padding: 20px; line-height: 1.5; }
+    
+    header { max-width: 1200px; margin: 0 auto 30px auto; text-align: center; }
+    h1 { color: var(--primary-dark); margin-bottom: 10px; }
+
+    .container { max-width: 1200px; margin: 0 auto; display: grid; grid-template-columns: 1fr; gap: 20px; }
+    @media (min-width: 900px) { .container { grid-template-columns: 350px 1fr; } }
+
+    /* Card Styles */
+    .card { background: var(--bg-card); border-radius: var(--radius); box-shadow: var(--shadow); padding: 20px; margin-bottom: 20px; border: 1px solid var(--border); }
+    .card h2 { font-size: 1.25rem; margin-bottom: 15px; padding-bottom: 10px; border-bottom: 2px solid var(--bg-body); color: var(--primary); display: flex; align-items: center; gap: 10px; }
+
+    /* Form Elements */
+    .form-group { margin-bottom: 15px; }
+    label { display: block; margin-bottom: 5px; font-weight: 600; font-size: 0.9rem; color: var(--text-main); }
+    input, select { width: 100%; padding: 10px; border: 1px solid var(--border); border-radius: var(--radius); font-size: 1rem; }
+    input:focus, select:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1); }
+
+    .btn-group { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
+    
+    button { cursor: pointer; padding: 10px 15px; border: none; border-radius: var(--radius); font-weight: 600; transition: background 0.2s; }
+    .btn-primary { background: var(--primary); color: white; width: 100%; }
+    .btn-success { background: var(--success); color: white; }
+    .btn-danger { background: var(--danger); color: white; }
+    button:hover { opacity: 0.9; }
+
+    /* Table Styles */
+    .table-responsive { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+    th, td { text-align: left; padding: 12px; border-bottom: 1px solid var(--border); }
+    th { background-color: #f8fafc; color: var(--secondary); font-weight: 600; }
+    
+    /* Toast Notification */
+    #toast-container { position: fixed; top: 20px; right: 20px; z-index: 9999; display: flex; flex-direction: column; gap: 10px; }
+    .toast { min-width: 250px; background: white; padding: 15px; border-radius: var(--radius); box-shadow: var(--shadow); border-left: 5px solid var(--primary); animation: slideIn 0.3s ease-out; }
+    .toast.success { border-left-color: var(--success); }
+    .toast.error { border-left-color: var(--danger); }
+    @keyframes slideIn { from { transform: translateX(100%); } to { transform: translateX(0); } }
+
+    .badge { padding: 4px 8px; border-radius: 12px; font-size: 0.75rem; font-weight: bold; }
+    .badge-in { background: #dcfce7; color: #166534; }
+    .badge-out { background: #fee2e2; color: #991b1b; }
+    .icon { width: 20px; height: 20px; fill: currentColor; }
+</style>
+</head>
+<body>
+
+<header>
+    <h1>Sistem Pengurusan Staff</h1>
+    <p>Sistem Kehadiran & Payroll (Live)</p>
+</header>
+
+<div id="toast-container"></div>
+
+<div class="container">
+    
+    <!-- Left Column: Forms -->
+    <div class="sidebar">
+        
+        <!-- Section: Clock In/Out -->
+        <section class="card">
+            <h2>
+                <svg class="icon" viewBox="0 0 24 24"><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10 10-4.5 10-10S17.5 2 12 2zm4.2 14.2L11 13V7h1.5v5.2l4.5 2.7-.8 1.3z"/></svg>
+                Rekod Kehadiran
+            </h2>
+            <div class="form-group">
+                <label for="nama">Nama Staff</label>
+                <select id="nama">
+                    <option value="">-- Pilih Nama --</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="shift">Shift</label>
+                <select id="shift">
+                    <option value="">-- Pilih Shift --</option>
+                    <option value="Pagi">Pagi (08:00 - 17:00)</option>
+                    <option value="Petang">Petang (14:00 - 23:00)</option>
+                    <option value="Malam">Malam (23:00 - 08:00)</option>
+                </select>
+            </div>
+            <div class="btn-group">
+                <button onclick="processAction('Clock In')" class="btn-success">Clock In</button>
+                <button onclick="processAction('Clock Out')" class="btn-danger">Clock Out</button>
+            </div>
+        </section>
+
+        <!-- Section: Tambah Staff -->
+        <section class="card">
+            <h2>
+                <svg class="icon" viewBox="0 0 24 24"><path d="M15 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm-9-2V7H4v3H1v2h3v3h2v-3h3v-2H6zm9 4c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
+                Tambah Staff Baru
+            </h2>
+            <div class="form-group">
+                <label>Nama Staff</label>
+                <input type="text" id="staffNama" placeholder="Contoh: Ali Bin Abu">
+            </div>
+            <div class="form-group">
+                <label>Staff ID</label>
+                <input type="text" id="staffID" placeholder="Contoh: STF-001">
+            </div>
+            <div class="form-group">
+                <label>Role</label>
+                <select id="staffRole">
+                    <option value="Staff">Staff</option>
+                    <option value="Admin">Admin</option>
+                    <option value="Manager">Manager</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Password</label>
+                <input type="password" id="staffPassword" placeholder="••••••">
+            </div>
+            <button onclick="addStaff()" class="btn-primary">Tambah Staff</button>
+        </section>
+
+        <!-- Section: Tambah Payroll -->
+        <section class="card">
+            <h2>
+                <svg class="icon" viewBox="0 0 24 24"><path d="M11.8 10.9c-2.27-.59-3-1.2-3-2.15 0-1.09 1.01-1.85 2.7-1.85 1.78 0 2.44.85 2.5 2.1h2.21c-.07-1.72-1.12-3.3-3.21-3.81V3h-3v2.16c-1.94.42-3.5 1.68-3.5 3.61 0 2.31 1.91 3.46 4.7 4.13 2.5.6 3 1.48 3 2.41 0 .69-.49 1.79-2.7 1.79-2.06 0-2.87-.92-2.98-2.1h-2.2c.12 2.19 1.76 3.42 3.68 3.83V21h3v-2.15c1.95-.37 3.5-1.5 3.5-3.55 0-2.84-2.43-3.81-4.7-4.4z"/></svg>
+                Tambah Payroll
+            </h2>
+            <div class="form-group">
+                <label>Staff ID</label>
+                <input type="text" id="payStaffID" placeholder="Contoh: STF-001">
+            </div>
+            <div class="form-group">
+                <label>Jumlah Gaji (RM)</label>
+                <input type="number" id="payGaji" placeholder="2500">
+            </div>
+            <div class="form-group">
+                <label>Bulan</label>
+                <select id="payBulan">
+                    <option value="Januari">Januari</option>
+                    <option value="Februari">Februari</option>
+                    <option value="Mac">Mac</option>
+                    <option value="April">April</option>
+                    <option value="Mei">Mei</option>
+                    <option value="Jun">Jun</option>
+                    <option value="Julai">Julai</option>
+                    <option value="Ogos">Ogos</option>
+                    <option value="September">September</option>
+                    <option value="Oktober">Oktober</option>
+                    <option value="November">November</option>
+                    <option value="Disember">Disember</option>
+                </select>
+            </div>
+            <button onclick="addPayroll()" class="btn-primary">Hantar Payroll</button>
+        </section>
+
+    </div>
+
+    <!-- Right Column: Data Display -->
+    <div class="main-content">
+        
+        <!-- Log Kehadiran -->
+        <section class="card">
+            <h2>Log Kehadiran Terkini</h2>
+            <div class="table-responsive">
+                <table id="attendanceTable">
+                    <thead>
+                        <tr>
+                            <th>Masa</th>
+                            <th>Nama</th>
+                            <th>Shift</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+            <p id="emptyLog" style="text-align:center; padding: 20px; color: #94a3b8;">Tiada rekod hari ini.</p>
+        </section>
+
+        <!-- Senarai Staff -->
+        <section class="card">
+            <h2>Senarai Staff</h2>
+            <div class="table-responsive">
+                <table id="staffTable">
+                    <thead>
+                        <tr>
+                            <th>Staff ID</th>
+                            <th>Nama</th>
+                            <th>Role</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- Rekod Payroll -->
+        <section class="card">
+            <h2>Rekod Payroll</h2>
+            <div class="table-responsive">
+                <table id="payrollTable">
+                    <thead>
+                        <tr>
+                            <th>Staff ID</th>
+                            <th>Gaji</th>
+                            <th>Bulan</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </section>
+
+    </div>
+</div>
+
+<script>
+// --- APPS SCRIPT URL ---
+// URL ini disambungkan terus ke Google Sheet anda
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxJfUL3SqoEttoBfaB_HNkzxIR1pordHGiKNY0lZL6crhVku22Ttq78OLiAfIXiXVLA/exec";
+
+// --- LOCAL STATE ---
+let staffData = [
+    { nama: "Aizie", id: "STF-001", role: "Admin" },
+    { nama: "Staff 2", id: "STF-002", role: "Staff" }
+];
+let attendanceData = [];
+let payrollData = [];
+
+window.onload = function() {
+    renderStaffDropdown();
+    renderStaffTable();
+};
+
+// --- HELPER FUNCTIONS ---
+function showToast(message, type = "success") {
+    const container = document.getElementById('toast-container');
+    const toast = document.createElement('div');
+    toast.className = `toast ${type}`;
+    toast.innerHTML = `<span>${message}</span>`;
+    container.appendChild(toast);
+    setTimeout(() => { toast.style.opacity = '0'; setTimeout(() => toast.remove(), 300); }, 3000);
+}
+
+function getCurrentTime() {
+    return new Date().toLocaleTimeString('ms-MY', { hour: '2-digit', minute: '2-digit' });
+}
+
+function renderStaffDropdown() {
+    const select = document.getElementById('nama');
+    select.innerHTML = '<option value="">-- Pilih Nama --</option>';
+    staffData.forEach(staff => {
+        const opt = document.createElement('option');
+        opt.value = staff.nama;
+        opt.textContent = staff.nama;
+        select.appendChild(opt);
+    });
+}
+
+// --- API & LOGIC ---
+
+function processAction(action) {
+    const nama = document.getElementById('nama').value;
+    const shift = document.getElementById('shift').value;
+    if (!nama || !shift) { showToast("Lengkapkan borang (Nama & Shift)", "error"); return; }
+
+    const data = {
+        type: "raw_log",
+        nama: nama,
+        shift: shift,
+        action: action
+    };
+
+    // Hantar ke Google Sheet
+    fetch(SCRIPT_URL, {
+        method: "POST",
+        mode: 'no-cors', // Diperlukan untuk elakkan ralat CORS Google Apps Script
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data)
+    })
+    .then(() => {
+        // Update UI secara manual (kerana response tak boleh dibaca dalam mode no-cors)
+        showToast(`${action} berjaya direkod (Google Sheet)`);
+        
+        // Tambah ke data tempatan untuk paparan segera
+        attendanceData.unshift({ ...data, timestamp: getCurrentTime() });
+        renderAttendanceTable();
+        
+        // Reset borang
+        document.getElementById('nama').value = "";
+        document.getElementById('shift').value = "";
+    })
+    .catch(err => showToast("Gagal hantar data", "error"));
+}
+
+function addStaff() {
+    const nama = document.getElementById('staffNama').value;
+    const staffID = document.getElementById('staffID').value;
+    const role = document.getElementById('staffRole').value;
+    const password = document.getElementById('staffPassword').value;
+
+    if (!nama || !staffID || !role || !password) { showToast("Lengkapkan borang", "error"); return; }
+
+    const data = {
+        type: "staff_db",
+        nama: nama,
+        staffID: staffID,
+        role: role,
+        password: password
+    };
+
+    fetch(SCRIPT_URL, {
+        method: "POST",
+        mode: 'no-cors',
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data)
+    })
+    .then(() => {
+        showToast(`Staff ${nama} berjaya ditambah`);
+        
+        // Update UI tempatan
+        staffData.push({ nama, id: staffID, role });
+        renderStaffTable();
+        renderStaffDropdown();
+        
+        document.getElementById('staffNama').value = "";
+        document.getElementById('staffID').value = "";
+        document.getElementById('staffPassword').value = "";
+    })
+    .catch(err => showToast("Gagal hantar data", "error"));
+}
+
+function addPayroll() {
+    const staffID = document.getElementById('payStaffID').value;
+    const gaji = document.getElementById('payGaji').value;
+    const bulan = document.getElementById('payBulan').value;
+
+    if (!staffID || !gaji || !bulan) { showToast("Lengkapkan borang", "error"); return; }
+
+    const data = {
+        type: "pay_roll",
+        staffID: staffID,
+        gaji: gaji,
+        bulan: bulan
+    };
+
+    fetch(SCRIPT_URL, {
+        method: "POST",
+        mode: 'no-cors',
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data)
+    })
+    .then(() => {
+        showToast("Payroll berjaya direkod");
+        
+        // Update UI tempatan
+        payrollData.unshift(data);
+        renderPayrollTable();
+        
+        document.getElementById('payStaffID').value = "";
+        document.getElementById('payGaji').value = "";
+    })
+    .catch(err => showToast("Gagal hantar data", "error"));
+}
+
+// --- RENDER TABLES ---
+function renderAttendanceTable() {
+    const tbody = document.querySelector('#attendanceTable tbody');
+    const emptyMsg = document.getElementById('emptyLog');
+    tbody.innerHTML = '';
+    
+    if (attendanceData.length > 0) {
+        emptyMsg.style.display = 'none';
+        attendanceData.forEach(row => {
+            const tr = document.createElement('tr');
+            const badgeClass = row.action === 'Clock In' ? 'badge-in' : 'badge-out';
+            tr.innerHTML = `<td>${row.timestamp}</td><td>${row.nama}</td><td>${row.shift}</td><td><span class="badge ${badgeClass}">${row.action}</span></td>`;
+            tbody.appendChild(tr);
+        });
+    }
+}
+
+function renderStaffTable() {
+    const tbody = document.querySelector('#staffTable tbody');
+    tbody.innerHTML = '';
+    staffData.forEach(row => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `<td>${row.id}</td><td>${row.nama}</td><td>${row.role}</td>`;
+        tbody.appendChild(tr);
+    });
+}
+
+function renderPayrollTable() {
+    const tbody = document.querySelector('#payrollTable tbody');
+    tbody.innerHTML = '';
+    payrollData.forEach(row => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `<td>${row.staffID}</td><td>RM ${parseFloat(row.gaji).toLocaleString()}</td><td>${row.bulan}</td>`;
+        tbody.appendChild(tr);
+    });
+}
+</script>
+
+</body>
+</html>
